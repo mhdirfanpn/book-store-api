@@ -14,7 +14,7 @@ router.get("/sampe",(req,res)=>{
 
 router.post("/login",userLogin);
 
-router.get("/books",booksData)
+router.get("/books",verifyToken,booksData)
 
 router.get("/book/:id",getBook)
 

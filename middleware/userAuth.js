@@ -1,8 +1,10 @@
 import jwt from "jsonwebtoken";
 
+let JWT_SECRET = "hello-world"
+
+
 export const verifyToken = async (req, res, next) => {
   try {
-    console.log("first")
     const authHeader = req.header("Authorization");
 
     if (!authHeader) {
@@ -11,14 +13,16 @@ export const verifyToken = async (req, res, next) => {
 
     const token = authHeader.split(" ").pop();
 
-    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    jwt.verify(token,JWT_SECRET, (err, decoded) => {
       if (err) {
-        return res.status(200).json({ message: "Authentication failed" });
+        console.log(err)
+        return res.status(200).json({ message: "Authentication failed", err });
       }
       req.decoded = decoded;
       next();
     });
   } catch (err) {
+    console.log(err)
     res.status(500).json({ error: err });
   }
 };

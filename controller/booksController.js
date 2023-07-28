@@ -3,9 +3,7 @@ import Book from "../model/books.js";
 import User from "../model/user.js";
 import { Cart } from "../model/cart.js";
 
-
 let JWT_SECRET = "hello-world"
-
 
 export const booksData = async (req, res) => {
     try {
@@ -114,7 +112,7 @@ export const addToCart = async (req, res) => {
         };
 
         const userCart = await Cart.findOne({ user: user._id })
-        
+
         if (userCart) {
             let proExist = userCart.cartProducts.findIndex(
                 (cartProducts) => cartProducts.item == productId
