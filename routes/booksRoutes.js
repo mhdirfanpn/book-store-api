@@ -16,7 +16,7 @@ router.post("/login",userLogin);
 
 router.get("/books",verifyToken,booksData)
 
-router.get("/book/:id",getBook)
+router.get("/book/:id",verifyToken,getBook)
 
 router.patch("/addToCart/:id", addToCart)
 
