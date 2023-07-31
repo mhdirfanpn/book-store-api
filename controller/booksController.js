@@ -246,8 +246,8 @@ export const getCart = async (req, res) => {
 };
 
 export const deleteProduct = async (req, res) => {
-    const { id, userEmail } = req.body
-    const user = await User.findOne({ email: userEmail })
+    const { id, email } = req.body
+    const user = await User.findOne({ email: email })
 
     Cart.updateOne(
         { user: user._id },

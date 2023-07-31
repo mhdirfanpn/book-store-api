@@ -11,14 +11,14 @@ router.get("/book/:id", verifyToken, getBook)
 
 router.get("/books", verifyToken, booksData)
 
-router.patch("/addToCart/:id", addToCart)
+router.patch("/addToCart/:id",verifyToken,addToCart)
 
-router.get("/cartCount", getCartCount)
+router.get("/cartCount", verifyToken,getCartCount)
 
-router.get("/getCart", getCart)
+router.get("/getCart", verifyToken,getCart)
 
-router.get("/deleteProduct", deleteProduct)
+router.get("/deleteProduct", verifyToken,deleteProduct)
 
-router.patch("/removeProduct/:id",removeFromCart)
+router.patch("/removeProduct/:id",verifyToken,removeFromCart)
 
 export default router;
