@@ -2,6 +2,9 @@ import jwt from "jsonwebtoken";
 import Book from "../model/books.js";
 import User from "../model/user.js";
 import { Cart } from "../model/cart.js";
+import mongoose from "mongoose";
+
+
 
 let JWT_SECRET = "hello-world"
 
@@ -19,12 +22,24 @@ export const booksData = async (req, res) => {
 
 export const getBook = async (req, res) => {
     try {
-        const book = await Book.findOne({ _id: req.params.id });
-        return res
-            .status(200)
-            .json({ message: "book details", book });
+        // Validate the provided ID
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({ error: "Invalid book ID format." });
+        }
+
+        const bookId = new mongoose.Types.ObjectId(req.params.id);
+        console.log(typeof bookId); // Check if bookId is of type ObjectId
+        const book = await Book.findOne({ _id: bookId });
+
+        if (!book) {
+            return res.status(404).json({ error: "Book not found." });
+        }
+
+        console.log(book);
+        return res.status(200).json({ message: "book details", book });
     } catch (err) {
-        res.status(400).json({ error: err });
+        console.log(err);
+        res.status(500).json({ error: "Something went wrong." });
     }
 };
 
@@ -101,6 +116,7 @@ export const addToCart = async (req, res) => {
     try {
         const productId = req.params.id;
         const { email } = req.body;
+        console.log(req.body)
         const user = await User.findOne({ email })
         const product = await Book.findOne({ _id: productId })
         const amount = parseFloat(product.price.replace('$', ''));
@@ -157,7 +173,6 @@ export const addToCart = async (req, res) => {
 
 export const getCartCount = async (req, res) => {
     try {
-        console.log(req.query)
         const { email } = req.query;
         const user = await User.findOne({ email })
         const userId = user._id
@@ -187,11 +202,9 @@ export const getCart = async (req, res) => {
     try {
         const { email } = req.query;
         const user = await User.findOne({ email });
-        console.log(user);
         const isCart = await Cart.findOne({ user: user._id })
         if (!isCart) return res.json({ message: "not cart found" })
         const userId = user._id;
-        console.log(userId);
 
         Cart.aggregate([
             {
@@ -246,4 +259,28 @@ export const deleteProduct = async (req, res) => {
         .catch((err) => {
             console.error(err);
         });
+};
+
+
+export const removeFromCart = async (req, res) => {
+    try {
+        const productId = req.params.id;
+        const { email } = req.body;
+        const user = await User.findOne({ email })
+        const product = await Book.findOne({ _id: productId })
+        const amount = parseFloat(product.price.replace('$', ''));
+
+        await Cart.updateOne(
+            { user: user, "cartProducts.item": productId },
+
+            {
+                $inc: {
+                    "cartProducts.$.quantity": -1,
+                    "cartProducts.$.price": -amount,
+                },
+            })
+            res.json("updated succesfully");
+    } catch (error) {
+        res.status(500).json({ error: 'An error occurred.' });
+    }
 };
