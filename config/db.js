@@ -15,3 +15,6 @@ const connectDb = async () => {
 };
 
 export default connectDb;
+
+
+// mongodb://localhost:27017/book-store

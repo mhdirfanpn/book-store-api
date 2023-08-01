@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import Book from "../model/books.js";
+import { Book } from "../model/books.js";
 import User from "../model/user.js";
 import { Cart } from "../model/cart.js";
 import mongoose from "mongoose";
@@ -10,10 +10,11 @@ let JWT_SECRET = "hello-world"
 
 export const booksData = async (req, res) => {
     try {
+        console.log("first")
         const books = await Book.find()
         return res
             .status(200)
-            .json({ message: "books data", books });
+            .json(books);
     } catch (err) {
         res.status(400).json({ error: err });
     }
@@ -36,7 +37,7 @@ export const getBook = async (req, res) => {
         }
 
         console.log(book);
-        return res.status(200).json({ message: "book details", book });
+        return res.status(200).json( book );
     } catch (err) {
         console.log(err);
         res.status(500).json({ error: "Something went wrong." });
@@ -102,7 +103,7 @@ export const userLogin = async (req, res) => {
                 JWT_SECRET,
                 { expiresIn: "30d" }
             );
-            res.status(200).json({ success: true, token, userDetails });
+            res.status(200).json({ success: true, token});
         } else {
             res.status(200).json({ success: false, message: "User not found" });
         }
@@ -114,6 +115,7 @@ export const userLogin = async (req, res) => {
 
 export const addToCart = async (req, res) => {
     try {
+           console.log("first")
         const productId = req.params.id;
         const { email } = req.body;
         console.log(req.body)
@@ -174,14 +176,14 @@ export const addToCart = async (req, res) => {
 export const getCartCount = async (req, res) => {
     try {
         const { email } = req.query;
+        console.log(req.query);
         const user = await User.findOne({ email })
         const userId = user._id
 
-        Cart.findOne({ user: userId }, { cartProducts: 1 })
+        Cart.findOne({ user: userId })
             .then((result) => {
                 if (result) {
-                    const cartProducts = result.cartProducts;
-                    const totalQuantity = cartProducts.reduce((sum, cartProduct) => sum + cartProduct.quantity, 0);
+                    const totalQuantity = result.cartProducts.length
                     res.json(totalQuantity)
 
                 } else {
@@ -200,53 +202,56 @@ export const getCartCount = async (req, res) => {
 
 export const getCart = async (req, res) => {
     try {
-        const { email } = req.query;
-        const user = await User.findOne({ email });
-        const isCart = await Cart.findOne({ user: user._id })
-        if (!isCart) return res.json({ message: "not cart found" })
-        const userId = user._id;
-
-        Cart.aggregate([
-            {
-                $match: { user: userId },
-            },
-            {
-                $unwind: "$cartProducts",
-            },
-            {
-                $addFields: {
-                    itemId: { $toObjectId: "$cartProducts.item" } // Convert item field to ObjectId
-                }
-            },
-            {
-                $lookup: {
-                    from: "products",
-                    localField: "itemId",
-                    foreignField: "_id",
-                    as: "cartItems",
-                },
-            },
-            {
-                $project: {
-                    _id: 1,
-                    item: "$cartProducts.item",
-                    quantity: "$cartProducts.quantity",
-                    price: "$cartProducts.price",
-                    product: { $arrayElemAt: ["$cartItems", 0] },
-                },
-            },
-        ]).then((cartItems) => {
-            res.json(cartItems)
-        })
-
+      const { email } = req.query;
+      const user = await User.findOne({ email });
+      const isCart = await Cart.findOne({ user: user._id });
+      if (!isCart) return res.json({ message: "No cart found" });
+      const userId = user._id;
+  
+      Cart.aggregate([
+        {
+          $match: { user: userId },
+        },
+        {
+          $unwind: "$cartProducts",
+        },
+        {
+          $addFields: {
+            itemId: { $toObjectId: "$cartProducts.item" },
+          },
+        },
+        {
+          $lookup: {
+            from: "books", // Use the correct collection name for the "Book" model (it might be "books" or "Books" based on the actual collection name in MongoDB).
+            localField: "itemId",
+            foreignField: "_id",
+            as: "cartItems",
+          },
+        },
+        {
+          $unwind: "$cartItems", // Unwind the "cartItems" array to get individual product details.
+        },
+        {
+          $project: {
+            _id: 1,
+            item: "$cartProducts.item",
+            quantity: "$cartProducts.quantity",
+            price: "$cartProducts.price",
+            product: "$cartItems", // Include the complete product details as "product" field.
+          },
+        },
+      ]).then((cartItems) => {
+        res.json(cartItems);
+      });
     } catch (error) {
-        console.log(error);
+      console.log(error);
     }
-
-};
+  };
 
 export const deleteProduct = async (req, res) => {
-    const { id, email } = req.body
+    const id = req.params.id;
+    const { email } = req.body;
+    console.log("hello")
     const user = await User.findOne({ email: email })
 
     Cart.updateOne(

@@ -17,7 +17,7 @@ router.get("/cartCount", verifyToken,getCartCount)
 
 router.get("/getCart", verifyToken,getCart)
 
-router.get("/deleteProduct", verifyToken,deleteProduct)
+router.patch("/deleteProduct/:id", verifyToken,deleteProduct)
 
 router.patch("/removeProduct/:id",verifyToken,removeFromCart)
 
